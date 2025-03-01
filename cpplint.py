@@ -1111,21 +1111,18 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
           error(filename, linenum, 'readability/nolint', 5,
                 f'Unknown NOLINT error category: {category}')
 
-def ProcessGlobalSuppresions(lines):
-  """Deprecated; use ProcessGlobalSuppressions."""
-  ProcessGlobalSuppressions(lines)
-
-def ProcessGlobalSuppressions(lines):
+def ProcessGlobalSuppressions(filename, lines):
   """Updates the list of global error suppressions.
 
   Parses any lint directives in the file that have global effect.
 
   Args:
+    filename: str, the name of the input file.
     lines: An array of strings, each representing a line of the file, with the
            last element being empty if the file is terminated with a newline.
   """
   for line in lines:
-    if _SEARCH_C_FILE.search(line):
+    if _SEARCH_C_FILE.search(line) or filename.endswith(('.c', '.cu', '.C')):
       for category in _DEFAULT_C_SUPPRESSED_CATEGORIES:
         _error_suppressions.AddGlobalSuppression(category)
     if _SEARCH_KERNEL_FILE.search(line):
@@ -6226,12 +6223,14 @@ def CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error,
                        for item in sublist])
 
   # All the lines have been processed, report the errors found.
-  for required_header_unstripped in sorted(required, key=required.__getitem__):
-    template = required[required_header_unstripped][1]
-    if required_header_unstripped.strip('<>"') not in include_dict:
-      error(filename, required[required_header_unstripped][0],
+  for header in sorted(required, key=required.__getitem__):
+    template = required[header][1]
+    if (header.strip('<>"') not in include_dict
+            and not (header.strip('<>"')[0] == 'c'
+                     and (header.strip('<>"')[1:] + '.h') in include_dict)):
+      error(filename, required[header][0],
             'build/include_what_you_use', 4,
-            'Add #include ' + required_header_unstripped + ' for ' + template)
+            'Add #include ' + header + ' for ' + template)
 
 
 _RE_PATTERN_EXPLICIT_MAKEPAIR = re.compile(r'\bmake_pair\s*<')
@@ -6522,7 +6521,7 @@ def ProcessFileData(filename, file_extension, lines, error,
   ResetNolintSuppressions()
 
   CheckForCopyright(filename, lines, error)
-  ProcessGlobalSuppressions(lines)
+  ProcessGlobalSuppressions(filename, lines)
   RemoveMultiLineComments(filename, lines, error)
   clean_lines = CleansedLines(lines)
 

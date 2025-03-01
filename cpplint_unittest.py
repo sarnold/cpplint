@@ -477,10 +477,18 @@ class CpplintTest(CpplintTestBase):
     self.TestLint(
         'long a = (int64_t) 65;  // NOLINT(runtime/int,readability/casting)',
         '')
-
     # All categories suppressed: (two aliases)
     self.TestLint('long a = (int64_t) 65;  // NOLINT', '')
     self.TestLint('long a = (int64_t) 65;  // NOLINT(*)', '')
+    # Linting a C file
+    error_collector = ErrorCollector(self.assertTrue)
+    cpplint.ProcessFileData('test.c', 'c',
+                            ['// Copyright 2014 Your Majesty.',
+                             'int64_t a = (int64_t) 65;',
+                             ''],
+                            error_collector)
+    self.assertEqual('', error_collector.Results())
+
     # Malformed NOLINT directive:
     self.TestLint(
         'long a = 65;  // NOLINT(foo)',
@@ -1123,6 +1131,9 @@ class CpplintTest(CpplintTestBase):
     self.TestIncludeWhatYouUse(
         'printf("hello world");',
         'Add #include <cstdio> for printf  [build/include_what_you_use] [4]')
+    self.TestIncludeWhatYouUse(
+      """#include <stdio.h>
+      printf("hello world");""", '')  # Avoid false positives w/ c-style include
     self.TestIncludeWhatYouUse(
         'void a(const string &foobar);',
         'Add #include <string> for string  [build/include_what_you_use] [4]')
