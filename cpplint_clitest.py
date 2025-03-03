@@ -185,7 +185,7 @@ class NoRepoSignatureTests(TemporaryFolderClassSetup, unittest.TestCase):
     def get_extra_command_args(self, cwd):
         return f' --repository {self._root} '
 
-    def _test_name_func(self, fun, _, x):
+    def _test_name_func(self, fun, x):
         del fun
         return f'test{x.args[0].capitalize()}Sample-{x.args[1]}'
 
