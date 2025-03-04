@@ -6226,12 +6226,15 @@ def CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error,
                        for item in sublist])
 
   # All the lines have been processed, report the errors found.
-  for required_header_unstripped in sorted(required, key=required.__getitem__):
-    template = required[required_header_unstripped][1]
-    if required_header_unstripped.strip('<>"') not in include_dict:
-      error(filename, required[required_header_unstripped][0],
+  for header in sorted(required, key=required.__getitem__):
+    template = required[header][1]
+    header_stripped = header.strip('<>"')
+    if (header_stripped not in include_dict
+            and not (header_stripped[0] == 'c'
+                     and (header_stripped[1:] + '.h') in include_dict)):
+      error(filename, required[header][0],
             'build/include_what_you_use', 4,
-            'Add #include ' + required_header_unstripped + ' for ' + template)
+            'Add #include ' + header + ' for ' + template)
 
 
 _RE_PATTERN_EXPLICIT_MAKEPAIR = re.compile(r'\bmake_pair\s*<')
