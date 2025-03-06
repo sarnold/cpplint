@@ -55,6 +55,17 @@ For full usage instructions, run:
 
     $ cpplint --help
 
+cpplint can also be run as a pre-commit hook by adding to `.pre-commit-config.yaml`:
+
+.. code-block:: yaml
+
+  - repo: https://github.com/cpplint/cpplint
+    rev: 2.0.0
+    hooks:
+      - id: cpplint
+        args:
+          - --filter=-whitespace/line_length,-whitespace/parens
+
 Changes
 =======
 
